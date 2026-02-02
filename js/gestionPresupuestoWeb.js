@@ -45,7 +45,13 @@ function repintar() {
     for (let i = 0; i < lista.length; i++) {
         mostrarGastoWeb("listado-gastos-completo", lista[i]);
     }
+
+    // Define the grouping variables here before using them
+    const agrupacionDia = gestionPresupuesto.agruparGastos("dia");
+    const agrupacionMes = gestionPresupuesto.agruparGastos("mes");
+    const agrupacionAnyo = gestionPresupuesto.agruparGastos("anyo");
 }
+
 
 /* ================= MOSTRAR GASTO ================= */
 
@@ -178,10 +184,14 @@ function mostrarGastosAgrupadosWeb(idElemento, agrup, periodo) {
     }
 
     contenedor.appendChild(divAgrup);
+    // Estilos
     divP.style.width = "33%";
     divP.style.display = "inline-block";
+    // Crear elemento <canvas> necesario para crear la gráfica
+    // https://www.chartjs.org/docs/latest/getting-started/
     let chart = document.createElement("canvas");
-
+    // Variable para indicar a la gráfica el período temporal del eje X
+    // En función de la variable "periodo" se creará la variable "unit" (anyo -> year; mes -> month; dia -> day)
     let unit = "";
     switch (periodo) {
         case "anyo":
@@ -196,28 +206,43 @@ function mostrarGastosAgrupadosWeb(idElemento, agrup, periodo) {
             break;
     }
 
+    // Creación de la gráfica
+    // La función "Chart" está disponible porque hemos incluido las etiquetas <script> correspondientes en el fichero HTML
     const myChart = new Chart(chart.getContext("2d"), {
+        // Tipo de gráfica: barras. Puedes cambiar el tipo si quieres hacer pruebas: https://www.chartjs.org/docs/latest/charts/line.html
         type: 'bar',
         data: {
-            datasets: [{
-                label: `Gastos por ${periodo}`,
-                backgroundColor: "#555555",
-                data: agrup
-            }]
+            datasets: [
+                {
+                    // Título de la gráfica
+                    label: `Gastos por ${periodo}`,
+                    // Color de fondo
+                    backgroundColor: "#555555",
+                    // Datos de la gráfica
+                    // "agrup" contiene los datos a representar. Es uno de los parámetros de la función "mostrarGastosAgrupadosWeb".
+                    data: agrup
+                }
+            ],
         },
         options: {
             scales: {
                 x: {
+                    // El eje X es de tipo temporal
                     type: 'time',
-                    time: { unit: unit }
+                    time: {
+                        // Indicamos la unidad correspondiente en función de si utilizamos días, meses o años
+                        unit: unit
+                    }
                 },
-                y: { beginAtZero: true }
+                y: {
+                    // Para que el eje Y empieza en 0
+                    beginAtZero: true
+                }
             }
         }
     });
-
+    // Añadimos la gráfica a la capa
     divP.append(chart);
-
 }
 
 /* ================= MANEJADORES LOCALES ================= */
@@ -520,7 +545,6 @@ function EditarHandleFormulario() {
 }
 
 /* ================= API ================= */
-
 async function cargarGastosApi() {
     const usuario = obtenerUsuarioApi();
     if (!usuario) {
@@ -568,14 +592,14 @@ async function cargarGastosApi() {
             return { id, descripcion, valor: isNaN(valor) ? 0 : valor, fecha: fechaMs, etiquetas };
         });
 
-        // IMPORTANTE: sustituye el listado actual por el de la API
         gestionPresupuesto.cargarGastos(adaptados);
-        repintar();
+        repintar(); // Asegúrate de repintar las gráficas después de actualizar los datos
     } catch (err) {
         console.error(err);
         alert("Error de red al conectar con la API");
     }
 }
+
 
 function BorrarGastoApiHandle() {
     this.handleEvent = async function () {
