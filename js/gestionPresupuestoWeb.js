@@ -144,6 +144,9 @@ function mostrarGastoWeb(idElemento, gasto) {
 /* ================= AGRUPADOS ================= */
 
 function mostrarGastosAgrupadosWeb(idElemento, agrup, periodo) {
+    var divP = document.getElementById(idElemento);
+    divP.innerHTML = ""; // Limpiar el contenido antes de actualizar
+
     const contenedor = document.getElementById(idElemento);
     if (!contenedor) return;
 
@@ -175,6 +178,46 @@ function mostrarGastosAgrupadosWeb(idElemento, agrup, periodo) {
     }
 
     contenedor.appendChild(divAgrup);
+    divP.style.width = "33%";
+    divP.style.display = "inline-block";
+    let chart = document.createElement("canvas");
+
+    let unit = "";
+    switch (periodo) {
+        case "anyo":
+            unit = "year";
+            break;
+        case "mes":
+            unit = "month";
+            break;
+        case "dia":
+        default:
+            unit = "day";
+            break;
+    }
+
+    const myChart = new Chart(chart.getContext("2d"), {
+        type: 'bar',
+        data: {
+            datasets: [{
+                label: `Gastos por ${periodo}`,
+                backgroundColor: "#555555",
+                data: agrup
+            }]
+        },
+        options: {
+            scales: {
+                x: {
+                    type: 'time',
+                    time: { unit: unit }
+                },
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    divP.append(chart);
+
 }
 
 /* ================= MANEJADORES LOCALES ================= */
@@ -335,7 +378,7 @@ function nuevoGastoWebFormulario() {
                     try {
                         const txt = await resp.text();
                         if (txt) msg += `\n${txt}`;
-                    } catch {}
+                    } catch { }
                     alert(msg);
                     return;
                 }
@@ -455,7 +498,7 @@ function EditarHandleFormulario() {
                         try {
                             const txt = await resp.text();
                             if (txt) msg += `\n${txt}`;
-                        } catch {}
+                        } catch { }
                         alert(msg);
                         return;
                     }
@@ -494,7 +537,7 @@ async function cargarGastosApi() {
             try {
                 const txt = await resp.text();
                 if (txt) msg += `\n${txt}`;
-            } catch {}
+            } catch { }
             alert(msg);
             return;
         }
@@ -556,7 +599,7 @@ function BorrarGastoApiHandle() {
                 try {
                     const txt = await resp.text();
                     if (txt) msg += `\n${txt}`;
-                } catch {}
+                } catch { }
                 alert(msg);
                 return;
             }
